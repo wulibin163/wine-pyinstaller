@@ -56,7 +56,7 @@ while (( $(ps | grep wineserver | grep -vc grep) != 0 )); do
 done
 
 echo "Installing Python..."
-./winew.sh python-3.7.3.exe /quiet InstallAllUsers=1 PrependPath=1
+./winew.sh python-3.7.9.exe /quiet InstallAllUsers=1 PrependPath=1
 
 echo "Installing Pyinstaller..."
 ./winew.sh pip3 install pyinstaller

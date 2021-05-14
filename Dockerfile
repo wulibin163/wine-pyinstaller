@@ -1,5 +1,5 @@
 # build wine
-FROM i386/ubuntu as winebuild
+FROM i386/ubuntu:18.04 as winebuild
 LABEL maintainer="kicsikrumpli@gmail.com"
 
 # build:
@@ -8,19 +8,22 @@ LABEL maintainer="kicsikrumpli@gmail.com"
 
 # enable source code repos and update: 
 ENV DEBIAN_FRONTEND=noninteractive
-RUN sed -i '/deb-src/s/^# //' /etc/apt/sources.list 
-RUN apt-get update && apt-get install -y flex \
+RUN sed -i '/deb-src/s/^# //' /etc/apt/sources.list \
+    && apt-get update \
+    && apt-get install -y flex \
     bison \
     gcc \
-    build-essential
-RUN apt-get build-dep -y wine
+    build-essential \
+    xdotool \
+    xvfb \
+    && apt-get build-dep -y wine \
+    && apt-get clean
 
 # copy, unpack, build wine source
-ADD wine-4.7.tar.xz /
-WORKDIR /wine-4.7
-RUN ./configure && make && make install
-
-RUN apt-get update && apt-get install -y xdotool xvfb
+COPY wine-6.0.tar.xz /
+RUN  mkdir -p /wine && cd /wine && tar -xf ../wine-6.0.tar.xz \
+     && cd wine-6.0 && ./configure && make && make install \
+     && cd / && rm -rf /wine
 
 # default for X Virtual Frame Buffer
 ARG DISPLAY=:1
@@ -29,17 +32,12 @@ RUN echo "DISPLAY: ${DISPLAY}"
 
 # winecfg
 WORKDIR /root/.wine/drive_c
-COPY python-3.7.3.exe .
+COPY python-3.7.9.exe .
 
 COPY config.sh .
-RUN chmod +x config.sh
-
 COPY winew.sh .
-RUN chmod +x winew.sh
-
-RUN ./config.sh
-
-# entrypoint
 COPY entrypoint.sh .
-RUN chmod +x entrypoint.sh
+
+RUN chmod +x config.sh winew.sh entrypoint.sh && ./config.sh
+
 ENTRYPOINT [ "./entrypoint.sh" ]
